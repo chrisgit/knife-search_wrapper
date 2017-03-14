@@ -154,6 +154,12 @@ knife exec scripts/status.rb
 
 Therefore using knife exec you could use node.all or search followed and then use Ruby sort capabilities.
 
+In simple terms this wil list the nodes in alphabetical order
+
+````
+knife exec -E "r = nodes.search('platform:centos*'); r.map {|i| i.name}.sort.each {|i| puts i}"
+````
+
 #### Ruby versions
 
 Works with Ruby versions
