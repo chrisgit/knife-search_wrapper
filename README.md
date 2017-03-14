@@ -89,6 +89,71 @@ knife search wrapper node "platform:centos" -a cookbooks.chef-sugar.version -o "
     - https://tickets.opscode.com/browse/CHEF-4467
 - Does not work with formats of YAML or JSON (i.e. command line options of -F yaml -F json)
 
+#### Alternatives
+
+If your sort / search is basic you can use knife exec https://docs.chef.io/knife_exec.html
+
+Examples of basic usage below
+
+````
+knife exec -E 'nodes.all {|n| puts "#{n.name} has #{n.memory.total} free memory"}'
+knife exec -E "nodes.search('platform:centos') do |item| puts item.name; end"
+````
+
+More advanced use allow you to call a script
+
+Script Example 1.
+
+```ruby
+% cat scripts/search_attributes.rb
+query = ARGV[2]
+attributes = ARGV[3].split(",")
+puts "Your query: #{query}"
+puts "Your attributes: #{attributes.join(" ")}"
+results = {}
+search(:node, query) do |n|
+   results[n.name] = {}
+   attributes.each {|a| results[n.name][a] = n[a]}
+end
+
+puts results
+exit 0
+```
+
+Run the script
+
+````
+knife exec scripts/search_attributes.rb "hostname:test_system" ipaddress,fqdn
+````
+
+Result
+
+````
+Your query: hostname:test_system
+Your attributes: ipaddress fqdn
+{"test_system.example.com"=>{"ipaddress"=>"10.1.1.200", "fqdn"=>"test_system.example.com"}}
+````
+
+Script Example 2.
+
+```ruby
+printf "%-5s %-12s %-8s %s\n", "Check In", "Name", "Ruby", "Recipes"
+nodes.all do |n|
+   checkin = Time.at(n['ohai_time']).strftime("%F %R")
+   rubyver = n['languages']['ruby']['version']
+   recipes = n.run_list.expand(_default).recipes.join(", ")
+   printf "%-20s %-12s %-8s %s\n", checkin, n.name, rubyver, recipes
+end
+```
+
+Assume the script above is stored in the scripts folder and is named status.rb
+
+````
+knife exec scripts/status.rb
+````
+
+Therefore using knife exec you could use node.all or search followed and then use Ruby sort capabilities.
+
 #### Ruby versions
 
 Works with Ruby versions
