@@ -23,7 +23,9 @@ def run
 
 Unfortunately virtually ALL of the code for knife search is in the run method, the method is too big to monkey patch so I've copied the code to add some sorting capability.
 
-The code in this wrapper is clunky because the search mechanism can return back a Chef:: object, the resulting Chef:: objects are quite large and sorting them directly can result in OOM errors.
+The code in this wrapper is clunky because the search mechanism can return back a Chef:: object, the resulting Chef:: objects are quite large and sorting them directly may result in OOM errors - although in most cases the memory issues I've encountered are caused by converting "node" data to JSON or YAML.
+
+The plugin is called knife search wrapper but should be able to co-exist with the normal knife search.
 
 ## Requirements
 
@@ -72,6 +74,8 @@ knife search wrapper node "platform:centos" -a cookbooks.chef-sugar.version -o c
 - If using -a for attribute then you must include the sort attribute must be included in the -a list
 - Sort is based on strings, does not sort or know about numeric fields
 - Does not consider pagination, assumes all results returned
+    - To be fair I've never got the -b ROW, --start ROW and -R INT, --rows INT parameters to work
+- Does not work with formats of YAML or JSON (i.e. command line options of -F yaml -F json)
 
 #### Ruby versions
 

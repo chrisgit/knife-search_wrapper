@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.version       = Knife::Search::Wrapper::VERSION
   spec.authors       = ['Chris Sullivan']
   spec.email         = ['email-blocked']
-  spec.date          = '2017-103-13'
+  spec.date          = '2017-03-13'
 
   spec.summary       = 'Sort for knife search'
   spec.description   = 'Add basic sorting on client side for chef search'
