@@ -69,12 +69,24 @@ Examples
 knife search wrapper node "platform:centos" -a cookbooks.chef-sugar.version -o cookbooks.chef-sugar.version
 ````
 
+14-03-2017 Added support for sort direction
+- ascending order is default and does not need to be specified
+- descending order needs to be passed on the command line
+
+````
+knife search wrapper node "platform:centos" -a cookbooks.chef-sugar.version -o cookbooks.chef-sugar.version+desc
+knife search wrapper node "platform:centos" -a cookbooks.chef-sugar.version -o "cookbooks.chef-sugar.version desc"
+````
+
 #### Limitations
 - Client side sort
 - If using -a for attribute then you must include the sort attribute must be included in the -a list
 - Sort is based on strings, does not sort or know about numeric fields
 - Does not consider pagination, assumes all results returned
     - To be fair I've never got the -b ROW, --start ROW and -R INT, --rows INT parameters to work
+    - https://tickets.opscode.com/browse/CHEF-3708
+    - Unsure of the format settings too
+    - https://tickets.opscode.com/browse/CHEF-4467
 - Does not work with formats of YAML or JSON (i.e. command line options of -F yaml -F json)
 
 #### Ruby versions

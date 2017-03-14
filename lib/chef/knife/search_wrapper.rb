@@ -1,10 +1,12 @@
 # Ripped from Chef::Knife::Search see Readme.MD
+# Creates a lightweight hash that can be sorted
 require 'chef/knife'
 require 'chef/knife/core/node_presenter'
 require 'addressable/uri'
 
 class Chef
   class Knife
+    # Grabbed from Chef source
     class SearchWrapper < Knife
 
       include Knife::Core::MultiAttributeReturnOption
@@ -62,31 +64,28 @@ class Chef
 
       def run
         init_variables
-        if config[:sort]
-          @sort_key = config[:sort]
-          @sort_path = @sort_key.split('.')
-        end
+        sort_parameters if config[:sort]
         read_cli_args
         fuzzify_query
         search_data
 
-        if @type == 'node'
-          ui.use_presenter Knife::Core::NodePresenter
-        end
+        ui.use_presenter Knife::Core::NodePresenter if @type == 'node'
+
         # json and yaml
         if ui.interchange?
           output({ :results => @item_count, :rows => @items })
         else
           # summary, text, pp
-          @sort_items.sort_by! {|item| item[:key] } if config[:sort]
+          if config[:sort]
+            @sort_items.sort_by! {|item| item[:key] }
+            @sort_items.reverse! if @sort_order == :desc
+          end
           ui.log "#{@item_count} items found"
           ui.log("\n")
           @sort_items.each do |sorted_item|
             item = @items[sorted_item[:index]]
             output(item)
-            unless config[:id_only]
-              ui.msg("\n")
-            end
+            ui.msg("\n") unless config[:id_only]
           end
         end
       end
@@ -101,6 +100,7 @@ class Chef
         @sort_items = []
         @sort_key = ''
         @sort_path = ''
+        @sort_order = :asc
       end
 
       def search_data
@@ -201,15 +201,34 @@ class Chef
         return final_filter
       end
 
+      # -o <field>+<order>
+      # -o "<field> <order>"
+      # Default sort order is asc so just look for order begining with 'desc''
+      def sort_parameters
+        sort_field = config[:sort].include?('+') ?
+                      config[:sort].split('+') :
+                      config[:sort].split(' ')
+        @sort_key = sort_field[0]
+        @sort_path = @sort_key.split('.')
+        if sort_field[1] && sort_field[1].strip.downcase.start_with?('desc')
+          @sort_order = :desc
+        end
+      end
+
       def sort_data()
         return { index: @item_count, key: '' } unless config[:sort]
         sort_value = ''
+        # -a specified, descend looking for match on dot path
         if @current_item.is_a?(Hash)
           sort_value = hash_value_for_key(@current_item, @sort_key)
         else
+          # Chef object, look for method call
           if @current_item.respond_to?(@sort_key.to_sym)
             sort_value = @current_item.send(@sort_key.to_sym)
           elsif
+            # Chef object, convert to hash and dig
+            # NB: environment requires default_attributes.XXX
+            # Node just needs attribute name
             @current_item_hash = @current_item.to_hash # Also to_hash which has slightly different results
             sort_value = @current_item_hash.dig(*@sort_path) || dig_top_level_keys() || ''
           end
