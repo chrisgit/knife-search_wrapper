@@ -160,6 +160,21 @@ In simple terms this wil list the nodes in alphabetical order
 knife exec -E "r = nodes.search('platform:centos*'); r.map {|i| i.name}.sort.each {|i| puts i}"
 ````
 
+Or simple list for import to CSV, good news too, I've not had any memory issues using knife exec.
+
+```ruby
+NodeVersions = Struct.new(:name, :environment, :cookbook_version)
+
+result = nodes.search('platform:centos').map do |node|
+  cookbook_version = node['cookbooks'] && node['cookbooks']['yum'] && node['cookbooks']['yum']['version'] || 'not found'
+  NodeVersions.new(node.name, node.chef_environment, cookbook_version)
+end.sort_by {|n| n.cookbook_version}
+
+result.each do |node|
+  puts format('%{name}, %{environment}, %{version}', name: node.name, environment: node.environment, version: node.cookbook_version)
+end
+```
+
 #### Ruby versions
 
 Works with Ruby versions
